@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance & Accounting Interview Prep</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: The application is designed as a multi-level flashcard system. The structure features a nested sidebar that allows users to navigate through main categories and their sub-categories. This was chosen to handle the large dataset, enabling a highly organized and focused study flow. A user selects a sub-category in the sidebar, which then populates the main content area with all relevant questions. This provides a clear, hierarchical path for exploration, moving from broad topics to specific concepts, which is ideal for systematic learning and exam preparation. -->
+    <!-- Visualization & Content Choices: Content (questions and answers) is presented using interactive cards, with each card representing a single topic. Report Info: Hierarchical topics -> Goal: Structured learning and recall -> Presentation Method: Nested sidebar for navigation, interactive click-to-reveal cards, and a search bar -> Interaction: Sidebar sections expand/collapse, cards toggle answer visibility, filtering by sub-category, and marking as "mastered" or "important", with the ability to add new concepts dynamically -> Justification: This structure avoids overwhelming the user with all questions at once, provides a clear learning path, and allows users to master one sub-topic before moving to the next. The search and "Show Important" functions provide alternative, quick ways to find information. The new "Add Concept" feature makes the guide extensible and personalized. The new rich-text editing feature allows users to customize content with persistent local storage. -> Library/Method: Vanilla JavaScript, Tailwind CSS. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --bg-main: #FBF9F1;
+            --bg-alt: #E5E1DA;
+            --text-main: #4A4A4A;
+            --text-accent: #8D7B68;
+            --border-color: #A4907C;
+            --accent-color: #C8B6A6;
+            --mastered-color: #D4E2D4;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-main);
+            color: var(--text-main);
+        }
+        .sidebar-btn {
+            transition: all 0.2s ease-in-out;
+            color: var(--text-main);
+        }
+        .sidebar-btn:hover {
+            background-color: var(--accent-color);
+            color: var(--text-main);
+        }
+        .sidebar-btn.active {
+            background-color: var(--accent-color);
+            color: var(--text-main);
+            font-weight: 600;
+        }
+        .sub-category-list {
+            overflow: hidden;
+            transition: max-height 0.7s ease-in-out;
+        }
+        .sub-category-list.collapsed {
+            max-height: 0;
+            transition: max-height 0.5s ease-out;
+        }
+        .question-card {
+            border: 2px solid var(--bg-alt);
+            transition: all 0.3s ease-in-out;
+        }
+        .question-card.mastered {
+            background-color: var(--mastered-color);
+            border-color: #99BC85;
+        }
+        .question-card.important {
+            background-color: #FFECB3;
+            border-color: #FFC107;
+        }
+        .question-card:hover {
+            border-color: var(--border-color);
+            transform: translateY(-4px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-out;
+        }
+        .answer.show {
+            max-height: 1000px;
+            transition: max-height 0.7s ease-in-out;
+        }
+        .progress-bar-inner {
+            transition: width 0.5s ease-in-out;
+        }
+        #sidebar {
+            background-color: var(--bg-alt);
+        }
+        .imp-toggle {
+            color: #FFC107;
+            font-weight: bold;
+        }
+        .imp-toggle-btn.active {
+            background-color: #FFC107;
+            color: #4A4A4A;
+        }
+        .editor-toolbar button {
+            background-color: #E5E7EB;
+            color: #4A4A4A;
+            padding: 8px;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .editor-toolbar button:hover {
+            background-color: #D1D5DB;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="flex min-h-screen">
+        <aside id="sidebar" class="w-64 bg-alt p-6 space-y-4 fixed top-0 left-0 h-full transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-30 overflow-y-auto">
+            <h1 class="text-2xl font-bold text-text-accent">Categories</h1>
+            <nav id="category-nav" class="space-y-2">
+                <button data-category="all" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg font-semibold active">All Questions</button>
+                <div class="space-y-1">
+                    <button data-category="Accounting Fundamentals" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg font-semibold main-category-toggle">
+                        <span class="flex justify-between items-center">
+                            <span>📘 Accounting Fundamentals</span>
+                            <span>&#9650;</span>
+                        </span>
+                    </button>
+                    <ul class="sub-category-list pl-4 space-y-1">
+                        <li><button data-category="Accounting Fundamentals" data-sub-category="Basic Principles of Accounting" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Basic Principles</button></li>
+                        <li><button data-category="Accounting Fundamentals" data-sub-category="Accounting Standards" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Accounting Standards</button></li>
+                        <li><button data-category="Accounting Fundamentals" data-sub-category="Accounting Cycle" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Accounting Cycle</button></li>
+                        <li><button data-category="Accounting Fundamentals" data-sub-category="Financial Statements" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Financial Statements</button></li>
+                        <li><button data-category="Accounting Fundamentals" data-sub-category="Other Key Topics" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Other Key Topics</button></li>
+                    </ul>
+                </div>
+                <div class="space-y-1">
+                    <button data-category="Finance Fundamentals & Ratios" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg font-semibold main-category-toggle">
+                         <span class="flex justify-between items-center">
+                            <span>💰 Finance Fundamentals & Ratios</span>
+                            <span>&#9650;</span>
+                        </span>
+                    </button>
+                    <ul class="sub-category-list pl-4 space-y-1">
+                        <li><button data-category="Finance Fundamentals & Ratios" data-sub-category="Finance Basics" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Finance Basics</button></li>
+                        <li><button data-category="Finance Fundamentals & Ratios" data-sub-category="Financial Statement Analysis" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Financial Statement Analysis</button></li>
+                        <li><button data-category="Finance Fundamentals & Ratios" data-sub-category="Ratios" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Ratios</button></li>
+                        <li><button data-category="Finance Fundamentals & Ratios" data-sub-category="Working Capital Management" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Working Capital Management</button></li>
+                    </ul>
+                </div>
+                <div class="space-y-1">
+                    <button data-category="Corporate Finance & Valuations" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg font-semibold main-category-toggle">
+                        <span class="flex justify-between items-center">
+                            <span>📉 Corporate Finance & Valuations</span>
+                            <span>&#9650;</span>
+                        </span>
+                    </button>
+                    <ul class="sub-category-list pl-4 space-y-1">
+                        <li><button data-category="Corporate Finance & Valuations" data-sub-category="Capital Budgeting" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Capital Budgeting</button></li>
+                        <li><button data-category="Corporate Finance & Valuations" data-sub-category="Cost of Capital" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Cost of Capital</button></li>
+                        <li><button data-category="Corporate Finance & Valuations" data-sub-category="Capital Structure" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Capital Structure</button></li>
+                        <li><button data-category="Corporate Finance & Valuations" data-sub-category="Leverage Analysis" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Leverage Analysis</button></li>
+                        <li><button data-category="Corporate Finance & Valuations" data-sub-category="Dividend Decisions" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Dividend Decisions</button></li>
+                        <li><button data-category="Corporate Finance & Valuations" data-sub-category="Valuations" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Valuations</button></li>
+                        <li><button data-category="Corporate Finance & Valuations" data-sub-category="Mergers & Acquisitions / Restructuring" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">M&A / Restructuring</button></li>
+                    </ul>
+                </div>
+                <div class="space-y-1">
+                    <button data-category="Capital Markets" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg font-semibold main-category-toggle">
+                        <span class="flex justify-between items-center">
+                            <span>📈 Capital Markets</span>
+                            <span>&#9650;</span>
+                        </span>
+                    </button>
+                    <ul class="sub-category-list pl-4 space-y-1">
+                        <li><button data-category="Capital Markets" data-sub-category="Market Basics" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Market Basics</button></li>
+                        <li><button data-category="Capital Markets" data-sub-category="Equity Market" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Equity Market</button></li>
+                        <li><button data-category="Capital Markets" data-sub-category="Debt Market" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Debt Market</button></li>
+                        <li><button data-category="Capital Markets" data-sub-category="Derivatives Market" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Derivatives Market</button></li>
+                        <li><button data-category="Capital Markets" data-sub-category="Mutual Funds & Alternative Investments" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Mutual Funds & AIs</button></li>
+                        <li><button data-category="Capital Markets" data-sub-category="Regulations & Institutions" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Regulations & Institutions</button></li>
+                        <li><button data-category="Capital Markets" data-sub-category="Recent Trends in Capital Markets" class="sidebar-btn w-full text-left px-4 py-2 rounded-lg">Recent Trends</button></li>
+                    </ul>
+                </div>
+            </nav>
+        </aside>
+        
+        <button id="menu-toggle" class="md:hidden fixed top-4 left-4 z-40 p-2 bg-accent-color text-text-main rounded-md">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+            </svg>
+        </button>
+
+        <main class="relative flex-1 md:ml-64 p-6 md:p-10">
+            <div class="absolute top-4 right-4 text-sm text-gray-500">Creator: Sainath Chidrawar</div>
+            <header class="mb-8">
+                <h1 class="text-4xl font-bold text-text-accent mb-2">Accounting & Finance Interview Guide</h1>
+                <p class="text-lg text-gray-600">An interactive tool to master key concepts for your finance interviews. Click on a question to reveal its answer and track your progress.</p>
+            </header>
+            
+            <div class="mb-8">
+                <div class="flex space-x-4 mb-4">
+                    <button id="show-all-btn" class="px-4 py-2 rounded-lg text-gray-800 font-medium bg-accent-color active">All Questions</button>
+                    <button id="show-imp-btn" class="px-4 py-2 rounded-lg text-gray-800 font-medium bg-gray-200">Show Important</button>
+                </div>
+                <input type="text" id="search-bar" placeholder="Search for a keyword..." class="w-full p-4 rounded-lg border-2 border-bg-alt focus:outline-none focus:border-border-color transition-colors">
+            </div>
+
+            <div class="mb-8">
+                <h2 class="text-xl font-semibold mb-2 text-text-accent">Your Progress</h2>
+                <div class="w-full bg-alt rounded-full h-4">
+                    <div id="progress-bar" class="bg-border-color h-4 rounded-full progress-bar-inner" style="width: 0%;"></div>
+                </div>
+                <p id="progress-text" class="text-right mt-1 text-sm font-medium text-gray-500">0/132 Mastered</p>
+            </div>
+             <div class="mb-8">
+                <button id="add-concept-btn" class="hidden px-4 py-2 rounded-lg text-gray-800 font-medium bg-green-200 hover:bg-green-300 transition-colors">➕ Add New Concept</button>
+                <form id="add-concept-form" class="mt-4 p-4 rounded-lg border-2 border-gray-300 hidden">
+                    <input type="text" id="new-concept-title" placeholder="Enter concept question..." class="w-full p-2 mb-2 rounded-lg border border-gray-400 focus:outline-none" required>
+                    <textarea id="new-concept-content" placeholder="Write your explanation or notes..." class="w-full p-2 h-32 mb-2 rounded-lg border border-gray-400 focus:outline-none" required></textarea>
+                    <button type="submit" id="submit-concept-btn" class="px-4 py-2 rounded-lg bg-green-500 text-white font-medium hover:bg-green-600 transition-colors">Save Concept</button>
+                </form>
+            </div>
+
+            <div id="questions-container" class="space-y-4">
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const interviewData = [
+            { id: 1, category: 'Accounting Fundamentals', subCategory: 'Basic Principles of Accounting', question: 'Explain the Accounting Equation and its significance.', answer: 'The accounting equation is Assets = Liabilities + Equity. It represents the relationship between a company\'s assets and the claims on those assets. Assets are financed either by borrowing (liabilities) or by the owners (equity). It is the fundamental principle of the double-entry system, ensuring that a company\'s balance sheet is always in balance.' },
+            { id: 2, category: 'Accounting Fundamentals', subCategory: 'Basic Principles of Accounting', question: 'Differentiate between Accrual and Cash Basis accounting.', answer: 'Accrual basis: Revenue is recognized when earned and expenses are recognized when incurred, regardless of when cash is exchanged. This method provides a more accurate picture of a company\'s profitability. Cash basis: Revenue is recognized when cash is received and expenses are recognized when cash is paid out. This method is simpler but may not reflect actual financial performance for a period.' },
+            { id: 3, category: 'Accounting Fundamentals', subCategory: 'Basic Principles of Accounting', question: 'What is the Matching Concept?', answer: 'The matching concept dictates that expenses should be recognized in the same period as the revenues they helped generate. For example, the cost of goods sold should be matched with the revenue from those sales in the same accounting period.' },
+            { id: 4, category: 'Accounting Fundamentals', subCategory: 'Basic Principles of Accounting', question: 'Explain the Prudence/Conservatism concept.', answer: 'The prudence principle requires that when faced with uncertainty, an accountant should recognize all losses and expenses as soon as they are probable, but should only recognize revenues and gains when they are certain. This prevents overstating profits and assets.' },
+            { id: 5, category: 'Accounting Fundamentals', subCategory: 'Basic Principles of Accounting', question: 'What is Materiality & Relevance?', answer: 'Materiality: Information is material if its omission or misstatement could influence the economic decisions of users. Relevance: Information is relevant if it has the capacity to influence a user\'s decision. These concepts help accountants decide which information should be disclosed and which can be omitted.' },
+            { id: 6, category: 'Accounting Fundamentals', subCategory: 'Basic Principles of Accounting', question: 'Explain the Going Concern Assumption.', answer: 'The going concern assumption assumes that a business will continue to operate for the foreseeable future. This assumption is foundational because it allows assets to be valued at their original cost (less depreciation) rather than their liquidation value.' },
+            { id: 7, category: 'Accounting Fundamentals', subCategory: 'Basic Principles of Accounting', question: 'What is the Consistency Principle?', answer: 'The consistency principle states that a company should use the same accounting policies and methods from one period to the next. This ensures that financial statements are comparable over time.' },
+            { id: 8, category: 'Accounting Fundamentals', subCategory: 'Basic Principles of Accounting', question: 'Explain Substance over Form.', answer: 'The substance over form principle states that accountants should record the economic reality of a transaction rather than its legal form. For example, a finance lease that is legally a rental agreement is treated as a purchase because the economic substance is that the lessee has acquired the asset.' },
+            { id: 9, category: 'Accounting Fundamentals', subCategory: 'Basic Principles of Accounting', question: 'What are Revenue Recognition Principles?', answer: 'Revenue is recognized when it is earned, not necessarily when cash is received. The key principles include: (1) an exchange has occurred, (2) the earnings process is complete, and (3) collectibility is reasonably assured.' },
+            { id: 10, category: 'Accounting Fundamentals', subCategory: 'Accounting Standards', question: 'Briefly describe Ind AS 1: Presentation of Financial Statements.', answer: 'Ind AS 1 sets out the overall requirements for the presentation of financial statements, including guidance on structure, content, and minimum disclosure requirements. It ensures comparability with the entity\'s own prior period financial statements and with the financial statements of other entities.' },
+            { id: 11, category: 'Accounting Fundamentals', subCategory: 'Accounting Standards', question: 'What does Ind AS 16 cover?', answer: 'Ind AS 16 deals with the accounting for Property, Plant, and Equipment (PP&E). It covers the recognition, measurement, and depreciation of such assets, including the capitalization of costs and subsequent revaluations.' },
+            { id: 12, category: 'Accounting Fundamentals', subCategory: 'Accounting Standards', question: 'Explain the core of Ind AS 12: Income Taxes.', answer: 'Ind AS 12 prescribes the accounting treatment for income taxes. It focuses on how to account for the current and future tax consequences of past transactions or events. This involves recognizing deferred tax assets and liabilities due to temporary differences between tax laws and accounting principles.' },
+            { id: 13, category: 'Accounting Fundamentals', subCategory: 'Accounting Standards', question: 'What is IFRS Convergence and its key differences with Ind AS?', answer: 'IFRS convergence refers to aligning Indian Accounting Standards (Ind AS) with International Financial Reporting Standards (IFRS). While largely similar, some key differences exist, such as the use of fair value in certain areas and specific nuances in disclosure requirements or transitional provisions.' },
+            { id: 14, category: 'Accounting Fundamentals', subCategory: 'Accounting Cycle', question: 'What is the purpose of a Trial Balance?', answer: 'A trial balance is a list of all ledger accounts and their balances. Its primary purpose is to verify the arithmetical accuracy of the double-entry bookkeeping system. The total of all debit balances should equal the total of all credit balances.' },
+            { id: 15, category: 'Accounting Fundamentals', subCategory: 'Accounting Cycle', question: 'What are Adjusting Entries and why are they important?', answer: 'Adjusting entries are journal entries made at the end of an accounting period to record revenues and expenses that have not been recorded yet. They are crucial for adhering to the matching concept and preparing accurate financial statements under the accrual basis of accounting.' },
+            { id: 16, category: 'Accounting Fundamentals', subCategory: 'Financial Statements', question: 'What is the Balance Sheet and its components?', answer: 'The Balance Sheet is a financial statement that provides a snapshot of a company\'s financial position at a specific point in time. It shows a company\'s Assets, Liabilities, and Equity. It follows the fundamental accounting equation: Assets = Liabilities + Equity.' },
+            { id: 17, category: 'Accounting Fundamentals', subCategory: 'Financial Statements', question: 'Explain the difference between a direct and indirect Cash Flow Statement.', answer: 'The direct method shows the actual cash received and paid from operations. The indirect method starts with net income and adjusts for non-cash items and changes in working capital to arrive at the net cash from operations. The indirect method is more commonly used.' },
+            { id: 18, category: 'Accounting Fundamentals', subCategory: 'Financial Statements', question: 'What is a Comprehensive Income Statement?', answer: 'A Comprehensive Income Statement includes all changes in equity during a period except those resulting from transactions with owners. It includes net income and other comprehensive income (OCI) items, such as unrealized gains or losses on certain investments.' },
+            { id: 19, category: 'Accounting Fundamentals', subCategory: 'Other Key Topics', question: 'Differentiate between SLM and WDV depreciation methods.', answer: 'Straight Line Method (SLM) charges a fixed amount of depreciation each year, calculated as (Cost - Salvage Value) / Useful Life. Written Down Value (WDV) method charges a fixed percentage on the diminishing book value of the asset each year, resulting in a higher depreciation charge in the early years.' },
+            { id: 20, category: 'Accounting Fundamentals', subCategory: 'Other Key Topics', question: 'Explain Amortisation & Impairment.', answer: 'Amortisation is the systematic write-off of the cost of an intangible asset over its useful life. Impairment is the reduction in an asset\'s carrying value on the balance sheet when its recoverable amount falls below its carrying amount. Goodwill is a common intangible asset that is tested for impairment.' },
+            { id: 21, category: 'Accounting Fundamentals', subCategory: 'Other Key Topics', question: 'What is the difference between Consolidated and Standalone Financials?', answer: 'Standalone financials present the financial position of a single company. Consolidated financials combine the financial statements of a parent company and all of its subsidiaries, treating them as a single economic entity.' },
+            { id: 22, category: 'Finance Fundamentals & Ratios', subCategory: 'Finance Basics', question: 'What is the primary objective of finance?', answer: 'The primary objective of finance is wealth maximization for the shareholders. This goes beyond simple profit maximization by considering the long-term value of the company, including factors like risk, future earnings potential, and dividends.' },
+            { id: 23, category: 'Finance Fundamentals & Ratios', subCategory: 'Finance Basics', question: 'Explain the Time Value of Money.', answer: 'The time value of money (TVM) is the concept that money available at the present time is worth more than the same amount in the future due to its potential earning capacity. TVM is a core principle of finance and is used to compare cash flows at different points in time.' },
+            { id: 24, category: 'Finance Fundamentals & Ratios', subCategory: 'Finance Basics', question: 'Differentiate between systematic and unsystematic risk.', answer: 'Systematic risk is market risk or non-diversifiable risk that affects the entire market. Examples include economic recession or changes in interest rates. Unsystematic risk is company-specific or diversifiable risk. It can be reduced through diversification of a portfolio.' },
+            { id: 25, category: 'Finance Fundamentals & Ratios', subCategory: 'Finance Basics', question: 'What is the CAPM model?', answer: 'The Capital Asset Pricing Model (CAPM) is a model that describes the relationship between the expected return on an asset and its systematic risk. The formula is: Expected Return = Risk-Free Rate + Beta * (Market Return - Risk-Free Rate). Beta measures the volatility of an asset relative to the overall market.' },
+            { id: 26, category: 'Finance Fundamentals & Ratios', subCategory: 'Financial Statement Analysis', question: 'What is Horizontal Analysis?', answer: 'Horizontal analysis, also known as trend analysis, is a technique that compares financial data from two or more consecutive periods. It helps to identify trends in a company\'s performance over time, such as revenue growth or cost increases.' },
+            { id: 27, category: 'Finance Fundamentals & Ratios', subCategory: 'Financial Statement Analysis', question: 'Explain the DuPont Analysis.', answer: 'DuPont analysis is a framework for dissecting Return on Equity (ROE). It breaks ROE into three components: Net Profit Margin, Asset Turnover, and Financial Leverage. This helps a company understand what drives its profitability and where to focus improvements.' },
+            { id: 28, category: 'Finance Fundamentals & Ratios', subCategory: 'Ratios', question: 'How do you calculate the Current Ratio and what does it indicate?', answer: 'Current Ratio = Current Assets / Current Liabilities. It is a liquidity ratio that measures a company\'s ability to pay off its short-term obligations using its short-term assets. A ratio of 1.5 or 2 is generally considered healthy.' },
+            { id: 29, category: 'Finance Fundamentals & Ratios', subCategory: 'Ratios', question: 'Explain the Debt-to-Equity Ratio.', answer: 'Debt-to-Equity Ratio = Total Debt / Total Equity. It is a solvency ratio that indicates how much debt a company is using to finance its assets relative to the value of its shareholders\' equity. A high ratio indicates that a company is using a lot of debt to finance its growth.' },
+            { id: 30, category: 'Finance Fundamentals & Ratios', subCategory: 'Ratios', question: 'What is Return on Equity (ROE) and why is it important?', answer: 'Return on Equity (ROE) = Net Income / Shareholder\'s Equity. It is a profitability ratio that measures how efficiently a company is using its shareholders\' money to generate profit. It is a key measure for investors to gauge a company\'s profitability.' },
+            { id: 31, category: 'Finance Fundamentals & Ratios', subCategory: 'Ratios', question: 'Explain the Price-to-Earnings (P/E) Ratio.', answer: 'P/E Ratio = Market Price per Share / Earnings per Share. It is a valuation ratio that tells investors how much they are willing to pay for each rupee of earnings. A high P/E ratio suggests that investors expect higher future earnings growth.' },
+            { id: 32, category: 'Finance Fundamentals & Ratios', subCategory: 'Working Capital Management', question: 'What is the Operating Cycle?', answer: 'The operating cycle is the time it takes for a company to convert its inventory into cash from sales. It includes the period from purchasing raw materials to receiving cash from customers.' },
+            { id: 33, category: 'Finance Fundamentals & Ratios', subCategory: 'Working Capital Management', question: 'What is the Cash Conversion Cycle?', answer: 'The Cash Conversion Cycle (CCC) is the time it takes for a company to convert its investments in inventory and other resources into cash flows from sales. It measures the number of days a company\'s cash is tied up in its operations.' },
+            { id: 34, category: 'Corporate Finance & Valuations', subCategory: 'Capital Budgeting', question: 'Differentiate between NPV and IRR.', answer: 'NPV (Net Present Value): The present value of future cash flows minus the initial investment. A positive NPV indicates a profitable project. IRR (Internal Rate of Return): The discount rate at which the NPV of a project becomes zero. It represents the project\'s expected rate of return. NPV is generally preferred as it gives a direct value amount, while IRR is a percentage and can have multiple values in non-conventional cash flows.' },
+            { id: 35, category: 'Corporate Finance & Valuations', subCategory: 'Cost of Capital', question: 'What is WACC?', answer: 'WACC stands for Weighted Average Cost of Capital. It is the average rate of return a company is expected to pay to all its security holders (debt and equity) to finance its assets. It is used as a discount rate to evaluate projects with a similar risk profile.' },
+            { id: 36, category: 'Corporate Finance & Valuations', subCategory: 'Capital Structure', question: 'Explain the Pecking Order Theory.', answer: 'The Pecking Order Theory suggests that companies prefer to finance their investments in a specific order: first with internal funds (retained earnings), then with debt, and lastly with external equity. This is based on the principle of least resistance, as internal funds are the cheapest and easiest to obtain.' },
+            { id: 37, category: 'Corporate Finance & Valuations', subCategory: 'Leverage Analysis', question: 'What is Financial Leverage?', answer: 'Financial leverage measures the extent to which a company\'s assets are financed by debt. A high degree of financial leverage means a company uses a high amount of debt. While it can magnify returns, it also increases financial risk.' },
+            { id: 38, category: 'Corporate Finance & Valuations', subCategory: 'Dividend Decisions', question: 'What is the MM Dividend Irrelevance Theory?', answer: 'The Miller-Modigliani (MM) Dividend Irrelevance Theory states that under certain assumptions, the value of a firm is not affected by its dividend policy. The value is determined by its earning power and its investment policy. This theory is a useful starting point but is limited by its assumptions.' },
+            { id: 39, category: 'Corporate Finance & Valuations', subCategory: 'Valuations', question: 'Explain the Discounted Cash Flow (DCF) method.', answer: 'DCF is a valuation method used to estimate the value of an investment based on its expected future cash flows. The future cash flows are discounted to their present value using a discount rate, typically the WACC, to find the intrinsic value of the business.' },
+            { id: 40, category: 'Corporate Finance & Valuations', subCategory: 'Valuations', question: 'What is Relative Valuation?', answer: 'Relative valuation involves valuing an asset by looking at the market prices of comparable assets. This is done by using valuation multiples like P/E, EV/EBITDA, or P/B ratios. It assumes that similar assets should be valued similarly.' },
+            { id: 41, category: 'Capital Markets', subCategory: 'Market Basics', question: 'What is the role of SEBI?', answer: 'SEBI (Securities and Exchange Board of India) is the regulatory body for the securities market in India. Its primary objectives are to protect the interests of investors, promote the development of the securities market, and regulate the market.' },
+            { id: 42, category: 'Capital Markets', subCategory: 'Market Basics', question: 'Differentiate between the Primary and Secondary markets.', answer: 'Primary market is where securities are created and sold for the first time by a company (e.g., through an IPO). Secondary market is where investors buy and sell existing securities from one another, not from the issuing company (e.g., stock exchanges like NSE and BSE).' },
+            { id: 43, category: 'Capital Markets', subCategory: 'Equity Market', question: 'What is an IPO?', answer: 'An IPO (Initial Public Offering) is the process by which a private company offers its shares to the public for the first time. It is a major milestone for a company, allowing it to raise capital and become publicly traded.' },
+            { id: 44, category: 'Capital Markets', subCategory: 'Equity Market', question: 'Explain short selling.', answer: 'Short selling is the practice of selling securities that you do not own. The seller borrows the securities and sells them in the market, hoping to buy them back at a lower price later to return to the lender. It is a way to profit from an expected decline in a security\'s price.' },
+            { id: 45, category: 'Capital Markets', subCategory: 'Debt Market', question: 'What is YTM?', answer: 'YTM (Yield to Maturity) is the total return anticipated on a bond if the bond is held until it matures. It is considered a long-term bond yield and is expressed as an annual rate. It is the discount rate at which the present value of all future cash flows from a bond equals its current price.' },
+            { id: 46, category: 'Capital Markets', subCategory: 'Debt Market', question: 'What is Duration & Convexity?', answer: 'Duration is a measure of a bond\'s sensitivity to changes in interest rates. A higher duration means the bond\'s price will be more volatile. Convexity measures the relationship between bond prices and yields, providing a more accurate measure of price changes for larger interest rate changes.' },
+            { id: 47, category: 'Capital Markets', subCategory: 'Derivatives Market', question: 'Differentiate between Forwards and Futures.', answer: 'Forwards are private agreements to buy or sell an asset at a predetermined future date and price. They are customized and traded over-the-counter. Futures are standardized contracts traded on an exchange, with a predetermined size and maturity date. Futures have a clearinghouse as a counterparty, reducing credit risk.' },
+            { id: 48, category: 'Capital Markets', subCategory: 'Derivatives Market', question: 'What are Option Greeks?', answer: 'Option Greeks are measures of the sensitivity of an option\'s price to a change in underlying parameters. Delta measures sensitivity to the asset price, Gamma to Delta\'s change, Theta to time decay, and Vega to volatility.' },
+            { id: 49, category: 'Capital Markets', subCategory: 'Mutual Funds & Alternative Investments', question: 'What is NAV, AUM, and Expense Ratio for Mutual Funds?', answer: 'NAV (Net Asset Value): The value per share of a mutual fund, calculated as (Total Assets - Total Liabilities) / Number of Shares. AUM (Assets Under Management): The total market value of all assets that a mutual fund manages. Expense Ratio: The annual fee charged by a mutual fund to its investors, expressed as a percentage of AUM.' },
+            { id: 50, category: 'Capital Markets', subCategory: 'Mutual Funds & Alternative Investments', question: 'What is the Sharpe Ratio?', answer: 'The Sharpe Ratio measures the performance of an investment by adjusting for its risk. It indicates how much excess return an investor receives for the volatility of holding a riskier asset. A higher Sharpe Ratio is generally better.' },
+            { id: 51, category: 'Capital Markets', subCategory: 'Regulations & Institutions', question: 'Explain Repo and Reverse Repo Rate.', answer: 'Repo (Repurchase) Rate: The rate at which the central bank lends money to commercial banks in exchange for government securities. Reverse Repo Rate: The rate at which the central bank borrows money from commercial banks by lending them government securities. Both are used by the central bank to control liquidity in the market.' },
+            { id: 52, category: 'Capital Markets', subCategory: 'Regulations & Institutions', question: 'What are the Basel Norms?', answer: 'The Basel Norms are international banking regulations issued by the Basel Committee on Banking Supervision. They provide a framework for a minimum capital adequacy ratio for banks, aiming to ensure that banks have enough capital to meet their obligations and absorb unexpected losses.' },
+            { id: 53, category: 'Capital Markets', subCategory: 'Recent Trends in Capital Markets', question: 'What are SPACs?', answer: 'SPACs (Special Purpose Acquisition Companies) are publicly-traded shell corporations created to acquire or merge with an existing company. They raise capital in an IPO and use the funds to acquire a private company, which then becomes public without going through a traditional IPO process.' },
+            { id: 54, category: 'Capital Markets', subCategory: 'Recent Trends in Capital Markets', question: 'What is ESG Investing?', answer: 'ESG (Environmental, Social, and Governance) investing is a form of sustainable investing that considers a company\'s performance on non-financial factors alongside traditional financial analysis. It is a growing trend that focuses on investing in companies that align with ethical and sustainable values.' },
+            { id: 55, category: 'Accounting Fundamentals', subCategory: 'Accounting Cycle', question: 'Explain the difference between a one-sided and a two-sided error in accounting.', answer: 'A one-sided error is a mistake that affects only one account, such as a posting error in a ledger account. It prevents the trial balance from tallying. A two-sided error is a mistake that affects at least two accounts in a way that the debits and credits still match, so the trial balance will still tally. An example is a correct entry posted to the wrong account.' },
+            { id: 56, category: 'Corporate Finance & Valuations', subCategory: 'Leverage Analysis', question: 'What is Operating Leverage?', answer: 'Operating leverage measures how a company’s operating income changes with a change in sales. It is influenced by the proportion of fixed costs to variable costs. A company with high operating leverage will have a high change in operating income for a small change in sales.' },
+            { id: 57, category: 'Finance Fundamentals & Ratios', subCategory: 'Ratios', question: 'What does the EV/EBITDA multiple signify?', answer: 'EV/EBITDA is a valuation multiple that compares a company\'s total value (Enterprise Value) to its earnings before interest, tax, depreciation, and amortization (EBITDA). It is a good metric for comparing companies with different capital structures, tax rates, and depreciation policies.' },
+            { id: 58, category: 'Finance Fundamentals & Ratios', subCategory: 'Finance Basics', question: 'Explain the concept of Perpetual Annuity.', answer: 'A perpetual annuity is a stream of equal, periodic cash flows that continues indefinitely. Its present value is calculated by dividing the periodic payment by the interest rate. It is often used to value assets that provide a continuous stream of income, such as a permanent scholarship fund.' },
+            { id: 59, category: 'Corporate Finance & Valuations', subCategory: 'Capital Budgeting', question: 'What is the Payback Period method?', answer: 'The payback period is the time required for an investment to generate cash inflows equal to its initial cost. It is a simple, non-discounted capital budgeting method used to assess the liquidity and risk of an investment, but it ignores the time value of money and cash flows after the payback period.' },
+            { id: 60, category: 'Accounting Fundamentals', subCategory: 'Other Key Topics', question: 'Explain the difference between Provisions, Reserves, and Contingencies.', answer: 'A provision is a known liability of an uncertain amount or timing. A reserve is an appropriation of profits for a specific purpose (e.g., for expansion), not to cover a known liability. A contingency is a potential liability that may or may not occur, depending on a future event.' },
+            { id: 61, category: 'Capital Markets', subCategory: 'Debt Market', question: 'What is a Zero Coupon Bond?', answer: 'A zero coupon bond does not pay periodic interest. It is issued at a deep discount to its face value, and the investor earns a return by receiving the full face value at maturity. The difference between the purchase price and face value represents the investor\'s return.' },
+            { id: 62, category: 'Finance Fundamentals & Ratios', subCategory: 'Financial Statement Analysis', question: 'What is Vertical Analysis?', answer: 'Vertical analysis, also known as common-size analysis, is a technique that expresses each line item on a financial statement as a percentage of a base amount within the same statement. For a balance sheet, all items are shown as a percentage of total assets. For an income statement, all items are a percentage of sales.' },
+            { id: 63, category: 'Corporate Finance & Valuations', subCategory: 'Valuations', question: 'Differentiate between FCFF and FCFE.', answer: 'FCFF (Free Cash Flow to the Firm) represents the total cash flow generated by a company before any debt payments, and it is available to all capital providers. FCFE (Free Cash Flow to Equity) is the cash flow available only to equity holders, after all debt payments have been made.' },
+            { id: 64, category: 'Corporate Finance & Valuations', subCategory: 'Capital Structure', question: 'Explain the MM Theory with and without taxes.', answer: 'The MM (Modigliani-Miller) theory states that a firm\'s value is independent of its capital structure without taxes. With corporate taxes, however, the value of the firm increases with debt, as interest payments are tax-deductible, creating a tax shield. This theory led to the idea that some debt is beneficial.' },
+            { id: 65, category: 'Capital Markets', subCategory: 'Derivatives Market', question: 'What are the main purposes of the derivatives market?', answer: 'The main purposes are hedging (reducing risk by offsetting an existing exposure), speculation (taking a position in a derivative to profit from an expected price change), and arbitrage (profiting from price discrepancies between the derivative and its underlying asset).' },
+            { id: 66, category: 'Finance Fundamentals & Ratios', subCategory: 'Working Capital Management', question: 'What is the EOQ model?', answer: 'The EOQ (Economic Order Quantity) model is a formula used to determine the optimal order size that minimizes the total inventory costs, including ordering costs and holding costs. It helps a company manage its inventory efficiently.' },
+            { id: 67, category: 'Corporate Finance & Valuations', subCategory: 'Mergers & Acquisitions / Restructuring', question: 'Explain the concept of synergies in M&A.', answer: 'Synergy is the idea that the value of a combined company is greater than the sum of the individual values. Synergies can be financial (e.g., tax benefits), operating (e.g., cost savings from eliminating redundant functions), or revenue-based (e.g., cross-selling).' },
+            { id: 68, category: 'Accounting Fundamentals', subCategory: 'Financial Statements', question: 'Differentiate between a Profit & Loss Account and a Cash Flow Statement.', answer: 'The P&L account shows a company\'s profitability over a period, recording revenue and expenses based on the accrual concept. The Cash Flow Statement tracks actual cash inflows and outflows, showing a company\'s liquidity and its ability to generate cash.' },
+            { id: 69, category: 'Capital Markets', subCategory: 'Mutual Funds & Alternative Investments', question: 'What is a SIP?', answer: 'A SIP (Systematic Investment Plan) is a method of investing in mutual funds by making regular, fixed-amount investments over a period. It helps investors benefit from dollar-cost averaging and reduces the risk of market volatility.' },
+            { id: 70, category: 'Finance Fundamentals & Ratios', subCategory: 'Ratios', question: 'What is the PEG Ratio?', answer: 'The PEG (Price/Earnings to Growth) Ratio is a valuation metric that builds on the P/E ratio by incorporating a company\'s earnings growth rate. It is a useful tool for comparing companies with different growth rates and is calculated as P/E Ratio / Annual EPS Growth Rate.' },
+            { id: 71, category: 'Corporate Finance & Valuations', subCategory: 'Cost of Capital', question: 'How is the cost of equity calculated using the Dividend Discount Model (DDM)?', answer: 'The DDM formula is Cost of Equity = (Expected Dividend per Share / Current Market Price per Share) + Dividend Growth Rate. This model assumes that the stock\'s value is the present value of all its future dividends.' },
+            { id: 72, category: 'Corporate Finance & Valuations', subCategory: 'Capital Structure', question: 'Explain the Trade-off Theory of capital structure.', answer: 'The Trade-off Theory suggests that a company chooses its capital structure by balancing the benefits of debt (the tax shield) and the costs of debt (financial distress costs). The optimal capital structure is where the value of the tax shield is maximized and the costs of financial distress are minimized.' },
+            { id: 73, category: 'Capital Markets', subCategory: 'Equity Market', question: 'What is a stock buyback?', answer: 'A stock buyback, or share repurchase, is when a company buys back its own shares from the marketplace. Companies do this to reduce the number of outstanding shares, which can increase the earnings per share (EPS) and often signals that the company believes its stock is undervalued.' },
+            { id: 74, category: 'Accounting Fundamentals', subCategory: 'Other Key Topics', question: 'Explain Accounting for Leases under Ind AS 116.', answer: 'Under Ind AS 116, most leases are now recognized on the balance sheet. The lessee recognizes a "right-of-use" asset and a lease liability for most leases, eliminating the distinction between finance and operating leases for the lessee. This provides a more transparent view of a company\'s liabilities.' },
+            { id: 75, category: 'Finance Fundamentals & Ratios', subCategory: 'Working Capital Management', question: 'What is Factoring in Receivables Management?', answer: 'Factoring is a financial transaction where a company sells its accounts receivable to a third party (the factor) at a discount. The factor then collects the receivables from the customer. This provides the company with immediate cash, improving its working capital.' },
+            { id: 76, category: 'Corporate Finance & Valuations', subCategory: 'Valuations', question: 'Explain the concept of Terminal Value in DCF.', answer: 'Terminal Value (TV) represents the value of a company beyond the explicit forecast period in a DCF model. It is the present value of all cash flows from the end of the forecast period to infinity. It is a crucial part of the DCF, often representing a significant portion of the total value.' },
+            { id: 77, category: 'Capital Markets', subCategory: 'Mutual Funds & Alternative Investments', question: 'Differentiate between Equity, Debt, and Hybrid Mutual Funds.', answer: 'Equity funds primarily invest in stocks and are high-risk/high-return. Debt funds invest in fixed-income securities like bonds and are low-risk. Hybrid funds invest in a mix of both stocks and bonds to balance risk and return.' },
+            { id: 78, category: 'Capital Markets', subCategory: 'Regulations & Institutions', question: 'Explain the roles of RBI and SEBI in India\'s financial markets.', answer: 'The RBI (Reserve Bank of India) is the central bank and the apex monetary authority. It formulates and implements monetary policy, manages foreign exchange, regulates and supervises the financial system, and issues currency to maintain price stability and ensure orderly development of the financial sector.' },
+            { id: 79, category: 'Corporate Finance & Valuations', subCategory: 'Mergers & Acquisitions / Restructuring', question: 'What is a Leveraged Buyout (LBO)?', answer: 'An LBO is a transaction where a company is acquired using a significant amount of borrowed money (leverage). The assets of the acquired company are often used as collateral for the loans. The goal is to improve the company\'s operations and sell it for a profit later.' },
+            { id: 80, category: 'Capital Markets', subCategory: 'Recent Trends in Capital Markets', question: 'What is Algorithmic Trading?', answer: 'Algorithmic trading is the use of computer programs to execute trades at high speeds and volumes. These algorithms are based on predefined rules and market data. It accounts for a significant portion of modern trading volume and has led to the rise of High-Frequency Trading (HFT).' },
+            { id: 81, category: 'Accounting Fundamentals', subCategory: 'Basic Principles of Accounting', question: 'What is the Double-Entry system?', answer: 'The double-entry system is a bookkeeping system where every financial transaction has an equal and opposite effect in at least two different accounts. For every debit entry, there must be a corresponding credit entry, ensuring that the total debits always equal total credits.' },
+            { id: 82, category: 'Accounting Fundamentals', subCategory: 'Accounting Standards', question: 'Briefly explain Ind AS 2: Inventories.', answer: 'Ind AS 2 deals with the valuation of inventories. It requires inventories to be valued at the lower of cost and net realizable value. It also outlines methods for determining inventory cost, such as FIFO and Weighted Average cost.' },
+            { id: 83, category: 'Accounting Fundamentals', subCategory: 'Financial Statements', question: 'What is OCI in a Comprehensive Income Statement?', answer: 'OCI stands for Other Comprehensive Income. It includes items of income and expenses that are not recognized in the Profit & Loss statement but are included in total comprehensive income. Examples include unrealized gains or losses on certain investments.' },
+            { id: 84, category: 'Finance Fundamentals & Ratios', subCategory: 'Ratios', question: 'Differentiate between Debt Ratio and Debt-to-Equity Ratio.', answer: 'Debt Ratio = Total Debt / Total Assets. It measures the proportion of a company\'s assets financed by debt. Debt-to-Equity Ratio = Total Debt / Total Equity. It measures the proportion of debt relative to equity used for financing. Both measure a company\'s financial leverage, but from different perspectives.' },
+            { id: 85, category: 'Corporate Finance & Valuations', subCategory: 'Capital Budgeting', question: 'What is MIRR and why is it sometimes preferred over IRR?', answer: 'MIRR (Modified Internal Rate of Return) is a capital budgeting tool that addresses some of the limitations of IRR, particularly the assumption that cash flows are reinvested at the IRR. MIRR assumes cash flows are reinvested at the company\'s cost of capital, providing a more realistic and reliable measure of a project\'s return.' },
+            { id: 86, category: 'Capital Markets', subCategory: 'Derivatives Market', question: 'What is a Straddle option strategy?', answer: 'A straddle is an option strategy that involves simultaneously buying a call and a put option on the same asset, with the same strike price and expiration date. The strategy is used when an investor expects significant price volatility but is unsure of the direction of the price movement.' },
+            { id: 87, category: 'Accounting Fundamentals', subCategory: 'Other Key Topics', question: 'How is revenue recognized for Long-term Contracts?', answer: 'Revenue is typically recognized using the Percentage of Completion method. This method recognizes revenue and expenses on a long-term project based on the progress made. The Completed Contract method recognizes revenue and expenses only when the entire contract is completed.' },
+            { id: 88, category: 'Finance Fundamentals & Ratios', subCategory: 'Working Capital Management', question: 'What is ABC Analysis in inventory management?', answer: 'ABC analysis is an inventory classification method that divides inventory items into three categories based on their value. A-items are high-value and require strict control. B-items are medium-value. C-items are low-value and require less control. It helps prioritize inventory management efforts.' },
+            { id: 89, category: 'Corporate Finance & Valuations', subCategory: 'Valuations', question: 'What is a Precedent Transaction (Deal Comp)?', answer: 'A precedent transaction is a valuation method that involves comparing the company being valued to similar companies that were recently sold or acquired. It provides a real-world benchmark for the value of the company and the premium paid for a similar deal.' },
+            { id: 90, category: 'Capital Markets', subCategory: 'Debt Market', question: 'Explain the concept of Credit Ratings.', answer: 'Credit ratings are assessments of the creditworthiness of a borrower, whether a company, a government, or an individual. They are assigned by credit rating agencies and provide an indication of the likelihood of the borrower defaulting on their debt obligations. A higher rating indicates lower risk.' },
+            { id: 91, category: 'Accounting Fundamentals', subCategory: 'Accounting Standards', question: 'Explain Ind AS 110: Consolidated Financial Statements.', answer: 'Ind AS 110 establishes principles for the presentation and preparation of consolidated financial statements when an entity controls one or more other entities. It defines control and requires a parent entity to present consolidated financial statements that include all its subsidiaries.' },
+            { id: 92, category: 'Finance Fundamentals & Ratios', subCategory: 'Ratios', question: 'What is the Interest Coverage Ratio?', answer: 'The Interest Coverage Ratio (ICR) measures a company\'s ability to pay its interest expenses on outstanding debt. It is calculated as EBIT (Earnings Before Interest and Taxes) / Interest Expense. A higher ratio indicates a company is in a better position to meet its interest obligations.' },
+            { id: 93, category: 'Corporate Finance & Valuations', subCategory: 'Capital Budgeting', question: 'What is Sensitivity, Scenario, and Simulation Analysis?', answer: 'These are risk analysis techniques in capital budgeting. Sensitivity analysis tests the impact of a change in a single variable on a project\'s outcome. Scenario analysis evaluates a project under a few defined scenarios (e.g., best case, worst case). Simulation analysis uses a computer model to generate many possible outcomes, based on a range of inputs.' },
+            { id: 94, category: 'Capital Markets', subCategory: 'Regulations & Institutions', question: 'What is the role of the RBI in the financial markets?', answer: 'The Reserve Bank of India (RBI) is the central bank and the apex monetary authority. It formulates and implements monetary policy, manages foreign exchange, regulates and supervises the financial system, and issues currency to maintain price stability and ensure orderly development of the financial sector.' },
+            { id: 95, category: 'Accounting Fundamentals', subCategory: 'Accounting Cycle', question: 'What are Closing Entries?', answer: 'Closing entries are made at the end of an accounting period to transfer the balances of all temporary accounts (revenues, expenses, and dividends) to a permanent account (retained earnings). This process resets the temporary accounts to a zero balance for the next accounting period.' },
+            { id: 96, category: 'Finance Fundamentals & Ratios', subCategory: 'Finance Basics', question: 'Differentiate between Ordinary and Due Annuity.', answer: 'An ordinary annuity is a series of equal payments made at the end of each period. A due annuity is a series of equal payments made at the beginning of each period. Due annuities have a slightly higher present value because each payment has an extra period to earn interest.' },
+            { id: 97, category: 'Corporate Finance & Valuations', subCategory: 'Capital Structure', question: 'Explain the Signalling Theory of capital structure.', answer: 'Signalling theory suggests that management\'s actions, such as the choice of capital structure, signal information to investors. Issuing new equity might signal that management believes the stock is overvalued, while issuing debt might signal confidence in future earnings and cash flows.' },
+            { id: 98, category: 'Capital Markets', subCategory: 'Equity Market', question: 'What is an FPO?', answer: 'An FPO (Follow-on Public Offer) is a process by which a company that is already listed on a stock exchange offers new shares to the public to raise additional capital. It is distinct from an IPO, which is a company\'s first public offering.' },
+            { id: 99, category: 'Finance Fundamentals & Ratios', subCategory: 'Ratios', question: 'Explain the Cash Ratio.', answer: 'The Cash Ratio is a liquidity ratio that measures a company\'s ability to pay off its short-term liabilities using only its most liquid assets: cash and cash equivalents. It is a more conservative measure than the Quick Ratio and is calculated as (Cash + Cash Equivalents) / Current Liabilities.' },
+            { id: 100, category: 'Accounting Fundamentals', subCategory: 'Financial Statements', question: 'What is the role of Notes to Accounts?', answer: 'Notes to accounts provide additional details and context for the numbers in the financial statements. They disclose significant accounting policies, explain changes in accounts, and provide information on items not reported on the face of the statements, such as contingent liabilities.' },
+            { id: 101, category: 'Corporate Finance & Valuations', subCategory: 'Dividend Decisions', question: 'What is the Residual Dividend Policy?', answer: 'The residual dividend policy states that a company should pay dividends only after it has funded all profitable investment opportunities. The dividend is the "residual" amount of earnings left over after all capital budgeting needs have been met.' },
+            { id: 102, category: 'Capital Markets', subCategory: 'Debt Market', question: 'Differentiate between Government Securities (G-Secs) and Corporate Bonds.', answer: 'G-Secs are debt instruments issued by the government and are considered very safe, as they have little to no default risk. Corporate bonds are issued by companies and carry a higher risk but also offer a higher return to compensate for that risk.' },
+            { id: 103, category: 'Finance Fundamentals & Ratios', subCategory: 'Working Capital Management', question: 'What is JIT?', answer: 'JIT (Just-in-Time) is an inventory management strategy in which materials and goods are delivered just as they are needed, rather than being stored in inventory. The goal is to reduce holding costs and improve efficiency, but it requires precise coordination with suppliers.' },
+            { id: 104, category: 'Capital Markets', subCategory: 'Regulations & Institutions', question: 'What is the Basel III capital adequacy framework?', answer: 'Basel III is a set of international banking regulations that aim to strengthen bank capital requirements, introduce stress testing, and impose liquidity ratios. It was developed to improve the banking sector\'s ability to absorb shocks from financial and economic stress.' },
+            { id: 105, category: 'Corporate Finance & Valuations', subCategory: 'Mergers & Acquisitions / Restructuring', question: 'What are the main motives for an M&A transaction?', answer: 'The main motives are to achieve synergies, diversify business lines to reduce risk, acquire new technologies or markets, and gain tax benefits from using the acquired company\'s tax losses or debt capacity.' },
+            { id: 106, category: 'Accounting Fundamentals', subCategory: 'Accounting Standards', question: 'Explain Ind AS 37: Provisions, Contingent Liabilities & Contingent Assets.', answer: 'Ind AS 37 provides guidance on the recognition, measurement, and disclosure of provisions, contingent liabilities, and contingent assets. It requires a provision to be recognized only when a present obligation exists from a past event, a reliable estimate of the amount can be made, and it is probable that an outflow of resources will be required to settle the obligation.' },
+            { id: 107, category: 'Corporate Finance & Valuations', subCategory: 'Cost of Capital', question: 'What is the Marginal Cost of Capital?', answer: 'The Marginal Cost of Capital (MCC) is the cost of the next rupee of new capital raised by a company. It is used in capital budgeting to determine the cost of financing a new project, as the cost of capital can change as a company raises more funds.' },
+            { id: 108, category: 'Capital Markets', subCategory: 'Derivatives Market', question: 'Differentiate between American and European options.', answer: 'American options can be exercised at any time up to and including the expiration date. European options can only be exercised on the expiration date. The added flexibility of American options makes them generally more valuable.' },
+            { id: 109, category: 'Finance Fundamentals & Ratios', subCategory: 'Ratios', question: 'What is the Return on Capital Employed (ROCE) and why is it useful?', answer: 'ROCE = EBIT / (Total Assets - Current Liabilities). It is a profitability ratio that measures how efficiently a company uses its capital to generate profits. It is a useful measure for comparing the performance of companies with different levels of debt.' },
+            { id: 110, category: 'Accounting Fundamentals', subCategory: 'Other Key Topics', question: 'Explain the concept of Impairment of Assets.', answer: 'Impairment is a reduction in the value of an asset. An asset is considered impaired when its carrying amount on the balance sheet is higher than its recoverable amount. If an asset is impaired, its carrying amount is written down to its recoverable amount, and the loss is recognized in the P&L.' },
+            { id: 111, category: 'Capital Markets', subCategory: 'Mutual Funds & Alternative Investments', question: 'What are Hedge Funds?', answer: 'Hedge funds are alternative investments that use a variety of strategies to generate returns for their investors. They are typically available only to accredited investors, and they use more complex strategies and instruments than traditional mutual funds, such as short selling and leverage.' },
+            { id: 112, category: 'Corporate Finance & Valuations', subCategory: 'Leverage Analysis', question: 'What is Combined Leverage?', answer: 'Combined leverage measures the combined effect of operating and financial leverage on a company\'s earnings per share. It shows how a percentage change in sales affects the earnings per share, considering both fixed operating costs and fixed financial costs.' },
+            { id: 113, category: 'Accounting Fundamentals', subCategory: 'Basic Principles of Accounting', question: 'Explain the concept of Substance over Form.', answer: 'The substance over form principle states that the economic reality of a transaction should be reflected in the financial statements, even if the legal form is different. For instance, a sale and repurchase agreement that is legally a sale may be treated as a loan if the economic reality is that the lessee has acquired the asset.' },
+            { id: 114, category: 'Finance Fundamentals & Ratios', subCategory: 'Financial Statement Analysis', question: 'Differentiate between Funds Flow and Cash Flow Analysis.', answer: 'Funds Flow analysis tracks changes in a company\'s working capital over a period, showing the sources and uses of funds. Cash Flow analysis tracks changes in a company\'s cash position, showing actual cash inflows and outflows from operating, investing, and financing activities.' },
+            { id: 115, category: 'Capital Markets', subCategory: 'Equity Market', question: 'What is a Rights Issue?', answer: 'A rights issue is a way for a company to raise capital by offering existing shareholders the right to purchase new shares at a discounted price. It allows existing shareholders to maintain their proportional ownership in the company and is typically used to raise funds for expansion or to reduce debt.' },
+            { id: 116, category: 'Corporate Finance & Valuations', subCategory: 'Valuations', question: 'Explain the concept of Exit Multiple in DCF.', answer: 'The exit multiple is a valuation multiple (e.g., EV/EBITDA, P/E) used to calculate the terminal value of a company. It is applied to a company\'s financials at the end of the explicit forecast period to determine its value, assuming the company will be sold at that time.' },
+            { id: 117, category: 'Accounting Fundamentals', subCategory: 'Accounting Standards', question: 'Explain Ind AS 21: The Effects of Changes in Foreign Exchange Rates.', answer: 'Ind AS 21 prescribes how to account for foreign currency transactions and operations in financial statements. It requires foreign currency transactions to be recorded at the exchange rate on the date of the transaction and specifies how to handle exchange differences.' },
+            { id: 118, category: 'Finance Fundamentals & Ratios', subCategory: 'Working Capital Management', question: 'What is the Baumol Model for cash management?', answer: 'The Baumol Model is a cash management model that determines the optimal amount of cash a firm should hold by balancing the cost of holding cash (lost interest) and the cost of converting marketable securities into cash. It is similar to the EOQ model for inventory.' },
+            { id: 119, category: 'Corporate Finance & Valuations', subCategory: 'Dividend Decisions', question: 'Explain the Walter\'s Model for dividend decisions.', answer: 'Walter\'s Model suggests that a firm\'s dividend policy is relevant and affects its value. It proposes that a company\'s value is determined by its earnings and dividend policy. If a company\'s return on investment is higher than its cost of capital, it should retain earnings. If it is lower, it should pay out dividends.' },
+            { id: 120, category: 'Capital Markets', subCategory: 'Recent Trends in Capital Markets', question: 'What is ESG Investing?', answer: 'ESG (Environmental, Social, and Governance) investing is a form of sustainable investing that considers a company\'s performance on non-financial factors alongside traditional financial analysis. It is a growing trend that focuses on investing in companies that align with ethical and sustainable values.' },
+            { id: 121, category: 'Accounting Fundamentals', subCategory: 'Other Key Topics', question: 'Explain Inventory Valuation methods.', answer: 'Common methods include FIFO (First-In, First-Out), LIFO (Last-In, First-Out), and Weighted Average Cost. FIFO assumes the first items purchased are the first ones sold. LIFO assumes the last items purchased are the first ones sold. Weighted Average calculates the average cost of all inventory.' },
+            { id: 122, category: 'Finance Fundamentals & Ratios', subCategory: 'Ratios', question: 'Explain the concept of Earnings per Share (EPS).', answer: 'EPS is the portion of a company\'s profit allocated to each outstanding share of common stock. It is a key measure of a company\'s profitability and is a widely used metric for investors to assess a company\'s value. It is calculated as (Net Income - Preferred Dividends) / Average Outstanding Shares.' },
+            { id: 123, category: 'Corporate Finance & Valuations', subCategory: 'Capital Budgeting', question: 'Explain the conflict between NPV and IRR.', answer: 'NPV and IRR can give conflicting decisions when comparing mutually exclusive projects, especially when the projects have different sizes or cash flow patterns. In such cases, the project with the higher NPV should be chosen, as it provides a direct measure of the value created for the company.' },
+            { id: 124, category: 'Capital Markets', subCategory: 'Mutual Funds & Alternative Investments', question: 'Differentiate between a Mutual Fund and a Hedge Fund.', answer: 'Mutual funds are typically more regulated and accessible to the public, with a focus on diversification and long-term investment. Hedge funds are less regulated, have more flexibility in their strategies (including short selling and leverage), and are typically only available to high-net-worth individuals.' },
+            { id: 125, category: 'Accounting Fundamentals', subCategory: 'Accounting Standards', question: 'What is Ind AS 38: Intangible Assets?', answer: 'Ind AS 38 prescribes the accounting treatment for intangible assets. It requires an entity to recognize an intangible asset if it meets certain criteria, including being identifiable, having a future economic benefit, and being controllable by the entity. It also covers the amortization of intangible assets.' },
+            { id: 126, category: 'Finance Fundamentals & Ratios', subCategory: 'Working Capital Management', question: 'What is the Miller-Orr Model for cash management?', answer: 'The Miller-Orr model is a cash management model that sets upper and lower control limits for a firm\'s cash balance. When the cash balance hits the upper limit, the firm invests the excess in marketable securities. When it hits the lower limit, the firm sells marketable securities to bring the cash balance back to a target level.' },
+            { id: 127, category: 'Corporate Finance & Valuations', subCategory: 'Dividend Decisions', question: 'What is Gordon\'s Growth Model?', answer: 'Gordon\'s Growth Model, or the Dividend Discount Model, assumes that a stock\'s value is the present value of its future dividends, which are expected to grow at a constant rate. It is used to estimate the intrinsic value of a stock based on its dividend payments.' },
+            { id: 128, category: 'Capital Markets', subCategory: 'Recent Trends in Capital Markets', question: 'What are Fintechs and their role in Capital Markets?', answer: 'Fintechs are companies that use technology to provide financial services. In capital markets, they have disrupted traditional services by offering digital broking, robo-advisors, and other automated investment platforms. They aim to make investing more accessible, efficient, and cost-effective.' },
+            { id: 129, category: 'Accounting Fundamentals', subCategory: 'Accounting Cycle', question: 'How do you rectify errors in accounting?', answer: 'Rectification of errors involves correcting mistakes in the accounting records. The method depends on when the error is discovered. One-sided errors found before the trial balance can be corrected with a simple entry. Two-sided errors require a new journal entry to balance the accounts. A suspense account is used to temporarily hold one-sided errors.' },
+            { id: 130, category: 'Finance Fundamentals & Ratios', subCategory: 'Ratios', question: 'What is the EV/Sales multiple?', answer: 'The EV/Sales (Enterprise Value to Sales) multiple is a valuation metric that compares a company\'s total value (EV) to its total sales. It is often used to value companies that are not yet profitable or have negative earnings, as sales is a more stable metric in the early stages of a company\'s growth.' },
+            { id: 131, category: 'Corporate Finance & Valuations', subCategory: 'Valuations', question: 'What are Comparable Companies (Trading Comps)?', answer: 'Comparable companies valuation, or trading comps, is a method of valuing a company by comparing it to similar publicly traded companies. It involves using valuation multiples, such as P/E or EV/EBITDA, to estimate the target company\'s value based on the market multiples of its peers.' },
+            { id: 132, category: 'Capital Markets', subCategory: 'Regulations & Institutions', question: 'Explain FDI vs FPI regulations.', answer: 'FDI (Foreign Direct Investment) is an investment made by an entity in a foreign country to control or have significant influence over a business. It is a long-term investment. FPI (Foreign Portfolio Investment) is an investment made in foreign financial assets (e.g., stocks, bonds) without gaining control over the company. It is typically a short-term, passive investment.' }
+        ];
+
+        let state = {
+            data: [],
+            currentCategory: 'all',
+            currentSubCategory: null,
+            searchTerm: '',
+            showImpOnly: false,
+            nextId: interviewData.length + 1
+        };
+        
+        const questionsContainer = document.getElementById('questions-container');
+        const searchBar = document.getElementById('search-bar');
+        const categoryNav = document.getElementById('category-nav');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        const menuToggle = document.getElementById('menu-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const showImpBtn = document.getElementById('show-imp-btn');
+        const showAllBtn = document.getElementById('show-all-btn');
+        const addConceptBtn = document.getElementById('add-concept-btn');
+        const addConceptForm = document.getElementById('add-concept-form');
+        const newConceptTitleInput = document.getElementById('new-concept-title');
+        const newConceptContentTextarea = document.getElementById('new-concept-content');
+        
+        function initializeState() {
+            try {
+                const savedData = JSON.parse(localStorage.getItem('userAddedConcepts')) || [];
+                state.data = interviewData.map(item => ({...item, answer: `<div>${item.answer}</div>`})).concat(savedData);
+                const savedSettings = JSON.parse(localStorage.getItem('userSettings')) || {};
+                state.data.forEach(item => {
+                    const saved = savedSettings[item.id];
+                    if (saved) {
+                        item.mastered = saved.mastered;
+                        item.isImp = saved.isImp;
+                        if (saved.answer) {
+                            item.answer = saved.answer;
+                        }
+                    } else {
+                        item.mastered = false;
+                        item.isImp = false;
+                    }
+                });
+                state.nextId = interviewData.length + savedData.length + 1;
+            } catch (error) {
+                console.error("Error loading state from localStorage, resetting data:", error);
+                state.data = interviewData.map(item => ({...item, answer: `<div>${item.answer}</div>`}));
+            }
+        }
+        
+        function saveState() {
+            const userAdded = state.data.filter(item => item.id >= interviewData.length + 1);
+            localStorage.setItem('userAddedConcepts', JSON.stringify(userAdded));
+            const settings = {};
+            state.data.forEach(item => {
+                settings[item.id] = { mastered: item.mastered, isImp: item.isImp, answer: item.answer };
+            });
+            localStorage.setItem('userSettings', JSON.stringify(settings));
+        }
+
+        function renderQuestions() {
+            questionsContainer.innerHTML = '';
+            let filteredData = state.data.filter(item => {
+                const inMainCategory = state.currentCategory === 'all' || item.category === state.currentCategory;
+                const inSubCategory = !state.currentSubCategory || item.subCategory === state.currentSubCategory;
+                const matchesSearch = item.question.toLowerCase().includes(state.searchTerm.toLowerCase()) || (item.answer && item.answer.toLowerCase().includes(state.searchTerm.toLowerCase()));
+                return inMainCategory && inSubCategory && matchesSearch;
+            });
+            
+            if (state.showImpOnly) {
+                filteredData = filteredData.filter(item => item.isImp);
+            }
+
+            if(filteredData.length === 0){
+                questionsContainer.innerHTML = `<p class="text-center text-gray-500">No questions found for the selected sub-category or search term.</p>`;
+            }
+
+            filteredData.forEach(q => {
+                const card = document.createElement('div');
+                card.className = `question-card relative rounded-lg shadow-sm p-6 cursor-pointer ${q.mastered ? 'mastered' : ''} ${q.isImp ? 'important' : ''}`;
+                card.dataset.id = q.id;
+                card.innerHTML = `
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-semibold">${q.question}</h3>
+                            <div class="answer mt-4 text-gray-700 leading-relaxed">
+                                ${q.answer}
+                            </div>
+                        </div>
+                        <div class="ml-4 flex-shrink-0 flex flex-col items-center space-y-2">
+                            <button class="mastered-toggle p-2 rounded-full hover:bg-gray-200 transition-colors" title="Mark as Mastered">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 ${q.mastered ? 'text-green-600' : 'text-gray-400'}" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </button>
+                            <button class="imp-toggle p-2 rounded-full hover:bg-gray-200 transition-colors" title="Mark as Important">
+                                <span class="text-2xl ${q.isImp ? 'imp-toggle' : 'text-gray-400'}">&#9733;</span>
+                            </button>
+                        </div>
+                    </div>
+                    <button class="edit-btn absolute bottom-2 right-2 p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors" title="Edit">
+                        ✏️
+                    </button>
+                `;
+                questionsContainer.appendChild(card);
+            });
+            updateProgress();
+            
+            if (state.currentSubCategory) {
+                addConceptBtn.classList.remove('hidden');
+            } else {
+                addConceptBtn.classList.add('hidden');
+            }
+            addConceptForm.classList.add('hidden');
+            newConceptTitleInput.value = '';
+            newConceptContentTextarea.value = '';
+        }
+
+        function updateProgress() {
+            const masteredCount = state.data.filter(q => q.mastered).length;
+            const totalCount = state.data.length;
+            const percentage = totalCount > 0 ? (masteredCount / totalCount) * 100 : 0;
+            
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${masteredCount}/${totalCount} Mastered`;
+        }
+
+        function handleCategoryClick(e) {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+
+            const isMainCategory = btn.classList.contains('main-category-toggle');
+            const subCategoryList = btn.nextElementSibling;
+
+            if (isMainCategory) {
+                 if (subCategoryList && subCategoryList.classList.contains('sub-category-list')) {
+                    const isCollapsed = subCategoryList.classList.toggle('collapsed');
+                    const arrow = btn.querySelector('span:last-child');
+                    if (isCollapsed) {
+                        arrow.innerHTML = '&#9660;';
+                    } else {
+                        arrow.innerHTML = '&#9650;';
+                    }
+                }
+                return;
+            }
+
+            const category = btn.dataset.category;
+            const subCategory = btn.dataset.subCategory;
+
+            state.currentCategory = category;
+            state.currentSubCategory = subCategory;
+            state.showImpOnly = false;
+
+            document.querySelectorAll('#category-nav button, #show-all-btn, #show-imp-btn').forEach(b => b.classList.remove('active', 'bg-accent-color'));
+            btn.classList.add('active', 'bg-accent-color');
+            
+            renderQuestions();
+            if (window.innerWidth < 768) {
+                sidebar.classList.add('-translate-x-full');
+            }
+        }
+
+        function handleSearchInput(e) {
+            state.searchTerm = e.target.value;
+            renderQuestions();
+        }
+        
+        function handleQuestionClick(e) {
+            const card = e.target.closest('.question-card');
+            if (!card) return;
+
+            if (e.target.closest('.mastered-toggle')) {
+                const questionId = parseInt(card.dataset.id);
+                const question = state.data.find(q => q.id === questionId);
+                question.mastered = !question.mastered;
+                saveState();
+                renderQuestions();
+            } else if (e.target.closest('.imp-toggle')) {
+                const questionId = parseInt(card.dataset.id);
+                const question = state.data.find(q => q.id === questionId);
+                question.isImp = !question.isImp;
+                saveState();
+                renderQuestions();
+            } else if (e.target.closest('.edit-btn')) {
+                const questionId = parseInt(card.dataset.id);
+                const question = state.data.find(q => q.id === questionId);
+                enterEditMode(card, question);
+            } else {
+                const answer = card.querySelector('.answer');
+                answer.classList.toggle('show');
+            }
+        }
+
+        function enterEditMode(card, question) {
+            card.classList.remove('cursor-pointer');
+            card.style.cursor = 'default';
+            card.innerHTML = `
+                <div class="edit-mode-container flex flex-col space-y-4">
+                    <input type="text" id="edit-title-${question.id}" class="text-xl font-semibold p-2 rounded-lg border-2 border-gray-300 focus:outline-none focus:border-blue-500" value="${question.question.replace(/"/g, '&quot;')}" />
+                    <div class="editor-toolbar flex flex-wrap space-x-2">
+                        <button type="button" data-command="bold" class="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors font-bold">B</button>
+                        <button type="button" data-command="italic" class="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors italic">I</button>
+                        <button type="button" data-command="underline" class="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors underline">U</button>
+                        <button type="button" data-command="insertUnorderedList" class="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors">Bullet List</button>
+                        <button type="button" data-command="insertOrderedList" class="p-2 rounded-lg bg-gray-200 hover:bg-gray-300 transition-colors">Numbered List</button>
+                    </div>
+                    <div id="edit-content-${question.id}" class="edit-content p-4 rounded-lg border-2 border-gray-300 h-64 overflow-y-auto focus:outline-none focus:border-blue-500" contenteditable="true">
+                        ${question.answer}
+                    </div>
+                    <div class="flex justify-end space-x-2 mt-4">
+                        <button type="button" class="save-btn px-4 py-2 rounded-lg bg-green-500 text-white font-medium hover:bg-green-600 transition-colors">Save</button>
+                        <button type="button" class="cancel-btn px-4 py-2 rounded-lg bg-red-500 text-white font-medium hover:bg-red-600 transition-colors">Cancel</button>
+                    </div>
+                </div>
+            `;
+            
+            const editContentDiv = document.getElementById(`edit-content-${question.id}`);
+            const toolbarButtons = card.querySelectorAll('.editor-toolbar button');
+            
+            toolbarButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const command = btn.dataset.command;
+                    document.execCommand(command, false, null);
+                    editContentDiv.focus();
+                });
+            });
+            
+            card.querySelector('.save-btn').addEventListener('click', () => {
+                question.question = document.getElementById(`edit-title-${question.id}`).value;
+                question.answer = editContentDiv.innerHTML;
+                saveState();
+                renderQuestions();
+            });
+
+            card.querySelector('.cancel-btn').addEventListener('click', () => {
+                renderQuestions();
+            });
+        }
+
+
+        function handleFilterToggle(e) {
+            const btn = e.target.closest('button');
+            if (!btn) return;
+            
+            if (btn.id === 'show-imp-btn') {
+                state.showImpOnly = true;
+            } else {
+                state.showImpOnly = false;
+                state.currentCategory = 'all';
+                state.currentSubCategory = null;
+            }
+            
+            document.querySelectorAll('#category-nav button, #show-all-btn, #show-imp-btn').forEach(b => b.classList.remove('active', 'bg-accent-color'));
+            btn.classList.add('active', 'bg-accent-color');
+            
+            renderQuestions();
+        }
+
+        addConceptBtn.addEventListener('click', () => {
+            addConceptForm.classList.toggle('hidden');
+        });
+
+        addConceptForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newConcept = {
+                id: state.nextId++,
+                category: state.currentCategory,
+                subCategory: state.currentSubCategory,
+                question: newConceptTitleInput.value.trim(),
+                answer: `<div>${newConceptContentTextarea.value.trim()}</div>`,
+                mastered: false,
+                isImp: false
+            };
+            state.data.push(newConcept);
+            saveState();
+            renderQuestions();
+            addConceptForm.classList.add('hidden');
+        });
+
+        menuToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('-translate-x-full');
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeState();
+            renderQuestions();
+            categoryNav.addEventListener('click', handleCategoryClick);
+            searchBar.addEventListener('input', handleSearchInput);
+            questionsContainer.addEventListener('click', handleQuestionClick);
+            showImpBtn.addEventListener('click', handleFilterToggle);
+            showAllBtn.addEventListener('click', handleFilterToggle);
+        });
+    </script>
+</body>
+</html>
